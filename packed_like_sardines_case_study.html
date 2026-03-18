@@ -651,35 +651,49 @@
 </footer>
 
 <script>
+  // Store target widths BEFORE any manipulation
+  const allFills = document.querySelectorAll('.bar-fill');
+  const targetWidths = new Map();
+  allFills.forEach(bar => targetWidths.set(bar, bar.style.width));
+
   // Fade-in on scroll
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-      }
+      if (entry.isIntersecting) entry.target.classList.add('visible');
     });
-  }, { threshold: 0.08 });
+  }, { threshold: 0.05 });
   document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
-  // Animate bar fills on scroll
+  // Bar animation — safe version that never leaves bars at 0%
+  const animated = new Set();
   const barObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-      if (entry.isIntersecting) {
+      if (entry.isIntersecting && !animated.has(entry.target)) {
+        animated.add(entry.target);
         const bars = entry.target.querySelectorAll('.bar-fill');
         bars.forEach((bar, i) => {
-          const targetW = bar.style.width;
+          const tw = targetWidths.get(bar) || bar.style.width;
+          bar.style.transition = 'none';
           bar.style.width = '0%';
-          setTimeout(() => { bar.style.width = targetW; }, i * 60);
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            bar.style.transition = 'width 0.9s cubic-bezier(0.4,0,0.2,1)';
+            setTimeout(() => { bar.style.width = tw; }, i * 55);
+          }));
         });
         barObserver.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.15 });
-  document.querySelectorAll('.bar-chart').forEach(el => {
-    const fills = el.querySelectorAll('.bar-fill');
-    fills.forEach(f => { f._target = f.style.width; f.style.width = '0%'; });
-    barObserver.observe(el);
-  });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.bar-chart').forEach(el => barObserver.observe(el));
+
+  // Fallback: after 2s ensure all bars visible regardless of observer
+  setTimeout(() => {
+    allFills.forEach(bar => {
+      const tw = targetWidths.get(bar);
+      if (tw && (bar.style.width === '0%' || bar.style.width === '')) bar.style.width = tw;
+    });
+  }, 2000);
 </script>
 </body>
 </html>
