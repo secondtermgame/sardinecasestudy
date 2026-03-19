@@ -63,8 +63,8 @@
   .bar-chart { margin-top: 40px; }
   .bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
   .bar-label { width: 220px; flex-shrink: 0; font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.6); text-align: right; letter-spacing: 0.05em; }
-  .bar-track { flex: 1; background: rgba(255,255,255,0.06); height: 32px; position: relative; border-radius: 2px; overflow: hidden; }
-  .bar-fill { height: 100%; position: absolute; left: 0; top: 0; border-radius: 2px; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+  .bar-track { flex: 1; background: rgba(255,255,255,0.06); height: 32px; border-radius: 2px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 2px; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; min-width: 0; }
   .bar-val { font-family: var(--mono); font-size: 10px; color: var(--dark); font-weight: 500; }
   .bar-fill.anchovy  { background: #e85d5d; }
   .bar-fill.artisan  { background: #f59e0b; }
@@ -707,41 +707,7 @@
 </footer>
 
 <script>
-  // Widths stored in data-w attr; bars start at width:0% in HTML
-  function revealBars(chart) {
-    chart.querySelectorAll('.bar-fill').forEach((bar, i) => {
-      const tw = bar.getAttribute('data-w') || '50%';
-      setTimeout(() => {
-        bar.style.transition = 'width 0.85s cubic-bezier(0.4,0,0.2,1)';
-        bar.style.width = tw;
-      }, i * 55);
-    });
-  }
-
-  const animatedCharts = new Set();
-  const barObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting && !animatedCharts.has(entry.target)) {
-        animatedCharts.add(entry.target);
-        revealBars(entry.target);
-        barObserver.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
-
-  document.querySelectorAll('.bar-chart').forEach(el => barObserver.observe(el));
-
-  // Fallback: reveal all bars after 1.5s (handles fast CDN loads / pre-scrolled pages)
-  setTimeout(() => {
-    document.querySelectorAll('.bar-fill').forEach(bar => {
-      if (!bar.style.width || bar.style.width === '0%') {
-        bar.style.transition = 'width 0.6s ease';
-        bar.style.width = bar.getAttribute('data-w') || '50%';
-      }
-    });
-  }, 1500);
-
-  // Fade-in observer
+  // Fade-in observer only — bar widths are set as static inline styles
   const fadeObserver = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
   }, { threshold: 0.05 });
